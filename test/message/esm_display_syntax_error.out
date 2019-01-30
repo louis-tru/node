@@ -5,7 +5,3 @@ await async () => 0;
 SyntaxError: Unexpected reserved word
     at internal/modules/esm/translators.js:*:*
     at async link (internal/modules/esm/module_job.js:*:*)
-    at async addJobsToDependencyGraph (internal/modules/esm/module_job.js:*:*)
-    at async ModuleJob._instantiate (internal/modules/esm/module_job.js:*:*)
-    at async ModuleJob.run (internal/modules/esm/module_job.js:*:*)
-    at async Loader.import (internal/modules/esm/loader.js:*:*)
