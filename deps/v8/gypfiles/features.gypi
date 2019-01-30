@@ -79,10 +79,6 @@
     # Use Siphash as added protection against hash flooding attacks.
     'v8_use_siphash%': 'false',
 
-    # Interpreted regexp engine exists as platform-independent alternative
-    # based where the regular expression is compiled to a bytecode.
-    'v8_interpreted_regexp%': 0,
-
     # Enable ECMAScript Internationalization API. Enabling this feature will
     # add a dependency on the ICU library.
     'v8_enable_i18n_support%': 1,
@@ -167,9 +163,6 @@
       }],
       ['v8_enable_verify_predictable==1', {
         'defines': ['VERIFY_PREDICTABLE',],
-      }],
-      ['v8_interpreted_regexp==1 or v8_enable_lite_mode==1', {
-        'defines': ['V8_INTERPRETED_REGEXP',],
       }],
       ['v8_deprecation_warnings==1', {
         'defines': ['V8_DEPRECATION_WARNINGS',],
