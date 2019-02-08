@@ -1,6 +1,6 @@
 {
   'variables': {
-    'v8_use_snapshot%': 'false',
+    'v8_use_snapshot%': 0,
     'v8_trace_maps%': 0,
     'node_use_dtrace%': 'false',
     'node_use_etw%': 'false',

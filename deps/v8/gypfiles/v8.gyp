@@ -227,22 +227,22 @@
       'target_name': 'v8_maybe_snapshot',
       'type': 'none',
       'conditions': [
-        ['v8_use_snapshot!="true"', {
+        ['v8_use_snapshot!=1', {
           # The dependency on v8_base should come from a transitive
           # dependency however the Android toolchain requires libv8_base.a
           # to appear before libv8_snapshot.a so it's listed explicitly.
           'dependencies': ['v8_base', 'v8_init', 'v8_nosnapshot'],
         }],
-        ['v8_use_snapshot=="true" and v8_use_external_startup_data==0', {
+        ['v8_use_snapshot==1 and v8_use_external_startup_data==0', {
           # The dependency on v8_base should come from a transitive
           # dependency however the Android toolchain requires libv8_base.a
           # to appear before libv8_snapshot.a so it's listed explicitly.
           'dependencies': ['v8_base', 'v8_init', 'v8_snapshot'],
         }],
-        ['v8_use_snapshot=="true" and v8_use_external_startup_data==1 and want_separate_host_toolset==0', {
+        ['v8_use_snapshot==1 and v8_use_external_startup_data==1 and want_separate_host_toolset==0', {
           'dependencies': ['v8_base', 'v8_external_snapshot'],
         }],
-        ['v8_use_snapshot=="true" and v8_use_external_startup_data==1 and want_separate_host_toolset==1', {
+        ['v8_use_snapshot==1 and v8_use_external_startup_data==1 and want_separate_host_toolset==1', {
           'dependencies': ['v8_base', 'v8_external_snapshot'],
         }],
         ['want_separate_host_toolset==1', {
@@ -504,7 +504,7 @@
             'mksnapshot_flags': [ '--turbo_instruction_scheduling', ],
           },
           'conditions': [
-            ['v8_enable_embedded_builtins == "true"', {
+            ['v8_enable_embedded_builtins == 1', {
               # In this case we use `embedded_variant "Default"`
               # and `suffix = ''` for the template `embedded${suffix}.S`.
               'outputs': [ '<(INTERMEDIATE_DIR)/embedded.S' ],
@@ -544,7 +544,7 @@
                 'mksnapshot_flags': [ '<(v8_embed_script)' ],
               },
             }],
-            ['v8_enable_snapshot_code_comments == "true"', {
+            ['v8_enable_snapshot_code_comments == 1', {
               'variables': {
                 'mksnapshot_flags': [ '--code-comments' ],
               },
@@ -2071,7 +2071,7 @@
             'BUILDING_V8_SHARED',
           ],
         }],
-        ['v8_postmortem_support=="true"', {
+        ['v8_postmortem_support==1', {
           'dependencies': [ 'postmortem-metadata#target' ],
           'sources': [
             '<(SHARED_INTERMEDIATE_DIR)/debug-support.cc',
