@@ -995,7 +995,7 @@ argument.
 <!-- YAML
 added: v0.11.13
 changes:
-  - version: REPLACEME
+  - version: v10.15.2
     pr-url: https://github.com/nodejs/node/pull/24405
     description: The `minVersion` and `maxVersion` can be used to restrict
                  the allowed TLS protocol versions.
