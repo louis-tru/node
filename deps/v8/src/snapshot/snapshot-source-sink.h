@@ -38,7 +38,7 @@ class SnapshotByteSource final {
 
   void Advance(int by) { position_ += by; }
 
-  void CopyRaw(byte* to, int number_of_bytes) {
+  void CopyRaw(void* to, int number_of_bytes) {
     memcpy(to, data_ + position_, number_of_bytes);
     position_ += number_of_bytes;
   }
@@ -96,6 +96,8 @@ class SnapshotByteSink {
 
   void PutInt(uintptr_t integer, const char* description);
   void PutRaw(const byte* data, int number_of_bytes, const char* description);
+
+  void Append(const SnapshotByteSink& other);
   int Position() const { return static_cast<int>(data_.size()); }
 
   const std::vector<byte>* data() const { return &data_; }

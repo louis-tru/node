@@ -114,7 +114,8 @@ def TorqueLintWorker(command):
       error_count += 1
     sys.stdout.write(out_lines)
     if error_count != 0:
-        sys.stdout.write("tip: use 'tools/torque/format-torque.py -i <filename>'\n");
+        sys.stdout.write(
+          "warning: formatting and overwriting unformatted Torque files\n")
     return error_count
   except KeyboardInterrupt:
     process.kill()
@@ -347,14 +348,15 @@ class CppLintProcessor(CacheableSourceFileProcessor):
     return None, arguments
 
 
-class TorqueFormatProcessor(CacheableSourceFileProcessor):
+class TorqueLintProcessor(CacheableSourceFileProcessor):
   """
   Check .tq files to verify they follow the Torque style guide.
   """
 
   def __init__(self, use_cache=True):
-    super(TorqueFormatProcessor, self).__init__(
-      use_cache=use_cache, cache_file_path='.torquelint-cache', file_type='Torque')
+    super(TorqueLintProcessor, self).__init__(
+      use_cache=use_cache, cache_file_path='.torquelint-cache',
+      file_type='Torque')
 
   def IsRelevant(self, name):
     return name.endswith('.tq')
@@ -370,7 +372,7 @@ class TorqueFormatProcessor(CacheableSourceFileProcessor):
   def GetProcessorScript(self):
     torque_tools = os.path.join(TOOLS_PATH, "torque")
     torque_path = os.path.join(torque_tools, "format-torque.py")
-    arguments = ['-l']
+    arguments = ["-il"]
     if os.path.isfile(torque_path):
       return torque_path, arguments
 
@@ -438,22 +440,15 @@ class SourceProcessor(SourceFileProcessor):
 
   IGNORE_COPYRIGHTS = ['box2d.js',
                        'cpplint.py',
-                       'check_injected_script_source.py',
                        'copy.js',
                        'corrections.js',
                        'crypto.js',
                        'daemon.py',
-                       'debugger-script.js',
                        'earley-boyer.js',
                        'fannkuch.js',
                        'fasta.js',
-                       'generate_protocol_externs.py',
                        'injected-script.cc',
                        'injected-script.h',
-                       'injected-script-source.js',
-                       'java-script-call-frame.cc',
-                       'java-script-call-frame.h',
-                       'jsmin.py',
                        'libraries.cc',
                        'libraries-empty.cc',
                        'lua_binarytrees.js',
@@ -464,14 +459,11 @@ class SourceProcessor(SourceFileProcessor):
                        'raytrace.js',
                        'regexp-pcre.js',
                        'resources-123.js',
-                       'rjsmin.py',
                        'sqlite.js',
                        'sqlite-change-heap.js',
                        'sqlite-pointer-masking.js',
                        'sqlite-safe-heap.js',
                        'v8-debugger-script.h',
-                       'v8-function-call.cc',
-                       'v8-function-call.h',
                        'v8-inspector-impl.cc',
                        'v8-inspector-impl.h',
                        'v8-runtime-agent-impl.cc',
@@ -521,7 +513,7 @@ class SourceProcessor(SourceFileProcessor):
       print "%s does not end with a single new line." % name
       result = False
     # Sanitize flags for fuzzer.
-    if "mjsunit" in name or "debugger" in name:
+    if ".js" in name and ("mjsunit" in name or "debugger" in name):
       match = FLAGS_LINE.search(contents)
       if match:
         print "%s Flags should use '-' (not '_')" % name
@@ -551,7 +543,7 @@ class SourceProcessor(SourceFileProcessor):
       try:
         handle = open(file)
         contents = handle.read()
-        if not self.ProcessContents(file, contents):
+        if len(contents) > 0 and not self.ProcessContents(file, contents):
           success = False
           violations += 1
       finally:
@@ -661,6 +653,7 @@ def PyTests(workspace):
   for script in [
       join(workspace, 'tools', 'release', 'test_scripts.py'),
       join(workspace, 'tools', 'unittests', 'run_tests_test.py'),
+      join(workspace, 'tools', 'testrunner', 'testproc', 'variant_unittest.py'),
     ]:
     print 'Running ' + script
     result &= subprocess.call(
@@ -673,8 +666,8 @@ def GetOptions():
   result = optparse.OptionParser()
   result.add_option('--no-lint', help="Do not run cpplint", default=False,
                     action="store_true")
-  result.add_option('--no-linter-cache', help="Do not cache linter results", default=False,
-                    action="store_true")
+  result.add_option('--no-linter-cache', help="Do not cache linter results",
+                    default=False, action="store_true")
 
   return result
 
@@ -692,7 +685,8 @@ def Main():
     success &= CppLintProcessor(use_cache=use_linter_cache).RunOnPath(workspace)
 
   print "Running Torque formatting check..."
-  success &= TorqueFormatProcessor(use_cache=use_linter_cache).RunOnPath(workspace)
+  success &= TorqueLintProcessor(use_cache=use_linter_cache).RunOnPath(
+    workspace)
   print "Running copyright header, trailing whitespaces and " \
         "two empty lines between declarations check..."
   success &= SourceProcessor().RunOnPath(workspace)

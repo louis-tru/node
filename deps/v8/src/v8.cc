@@ -11,6 +11,7 @@
 #include "src/base/once.h"
 #include "src/base/platform/platform.h"
 #include "src/bootstrapper.h"
+#include "src/cpu-features.h"
 #include "src/debug/debug.h"
 #include "src/deoptimizer.h"
 #include "src/elements.h"
@@ -20,7 +21,6 @@
 #include "src/libsampler/sampler.h"
 #include "src/objects-inl.h"
 #include "src/profiler/heap-profiler.h"
-#include "src/reloc-info.h"
 #include "src/runtime-profiler.h"
 #include "src/simulator.h"
 #include "src/snapshot/natives.h"
@@ -47,15 +47,13 @@ bool V8::Initialize() {
 
 
 void V8::TearDown() {
+  wasm::WasmEngine::GlobalTearDown();
 #if defined(USE_SIMULATOR)
   Simulator::GlobalTearDown();
 #endif
-  wasm::WasmEngine::GlobalTearDown();
   CallDescriptors::TearDown();
-  Bootstrapper::TearDownExtensions();
   ElementsAccessor::TearDown();
   RegisteredExtension::UnregisterAll();
-  sampler::Sampler::TearDown();
   FlagList::ResetAllFlags();  // Frees memory held by string arguments.
 }
 
@@ -89,7 +87,6 @@ void V8::InitializeOncePerProcessImpl() {
 #if defined(USE_SIMULATOR)
   Simulator::InitializeOncePerProcess();
 #endif
-  sampler::Sampler::SetUp();
   CpuFeatures::Probe(false);
   ElementsAccessor::InitializeOncePerProcess();
   Bootstrapper::InitializeOncePerProcess();

@@ -6,7 +6,6 @@
 
 #include <vector>
 
-#include "src/assembler.h"
 #include "src/compiler/common-operator.h"
 #include "src/compiler/js-operator.h"
 #include "src/compiler/node-properties.h"
@@ -1947,7 +1946,7 @@ Matcher<Node*> IsTailCall(
         IrOpcode::k##opcode, hint_matcher, lhs_matcher, rhs_matcher,          \
         effect_matcher, control_matcher));                                    \
   }
-SIMPLIFIED_SPECULATIVE_NUMBER_BINOP_LIST(DEFINE_SPECULATIVE_BINOP_MATCHER);
+SIMPLIFIED_SPECULATIVE_NUMBER_BINOP_LIST(DEFINE_SPECULATIVE_BINOP_MATCHER)
 DEFINE_SPECULATIVE_BINOP_MATCHER(SpeculativeNumberEqual)
 DEFINE_SPECULATIVE_BINOP_MATCHER(SpeculativeNumberLessThan)
 DEFINE_SPECULATIVE_BINOP_MATCHER(SpeculativeNumberLessThanOrEqual)
@@ -2152,6 +2151,7 @@ IS_BINOP_MATCHER(Word64Equal)
 IS_BINOP_MATCHER(Int32AddWithOverflow)
 IS_BINOP_MATCHER(Int32SubWithOverflow)
 IS_BINOP_MATCHER(Int32Add)
+IS_BINOP_MATCHER(Int32Div)
 IS_BINOP_MATCHER(Int32Sub)
 IS_BINOP_MATCHER(Int32Mul)
 IS_BINOP_MATCHER(Int32MulHigh)
@@ -2159,6 +2159,7 @@ IS_BINOP_MATCHER(Int32LessThan)
 IS_BINOP_MATCHER(Uint32LessThan)
 IS_BINOP_MATCHER(Uint32LessThanOrEqual)
 IS_BINOP_MATCHER(Int64Add)
+IS_BINOP_MATCHER(Int64Div)
 IS_BINOP_MATCHER(Int64Sub)
 IS_BINOP_MATCHER(Int64Mul)
 IS_BINOP_MATCHER(JSAdd)
@@ -2255,22 +2256,14 @@ IS_UNOP_MATCHER(TaggedPoisonOnSpeculation)
 // Special-case Bitcast operators which are disabled when ENABLE_VERIFY_CSA is
 // not enabled.
 Matcher<Node*> IsBitcastTaggedToWord(const Matcher<Node*>& input_matcher) {
-#ifdef ENABLE_VERIFY_CSA
   return MakeMatcher(
       new IsUnopMatcher(IrOpcode::kBitcastTaggedToWord, input_matcher));
-#else
-  return input_matcher;
-#endif
 }
 
 Matcher<Node*> IsBitcastWordToTaggedSigned(
     const Matcher<Node*>& input_matcher) {
-#ifdef ENABLE_VERIFY_CSA
   return MakeMatcher(
       new IsUnopMatcher(IrOpcode::kBitcastWordToTaggedSigned, input_matcher));
-#else
-  return input_matcher;
-#endif
 }
 
 #undef LOAD_MATCHER

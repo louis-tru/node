@@ -9,7 +9,6 @@
 #include "src/torque/declaration-visitor.h"
 #include "src/torque/global-context.h"
 #include "src/torque/implementation-visitor.h"
-#include "src/torque/scope.h"
 #include "src/torque/torque-parser.h"
 #include "src/torque/type-oracle.h"
 #include "src/torque/types.h"
@@ -51,31 +50,33 @@ int WrappedMain(int argc, const char** argv) {
     ParseTorque(file_content);
   }
 
-  GlobalContext global_context(std::move(CurrentAst::Get()));
-  if (verbose) global_context.SetVerbose();
-  TypeOracle::Scope type_oracle(global_context.declarations());
+  GlobalContext::Scope global_context(std::move(CurrentAst::Get()));
+  if (verbose) GlobalContext::SetVerbose();
+  TypeOracle::Scope type_oracle;
 
   if (output_directory.length() != 0) {
-    {
-      DeclarationVisitor visitor(global_context);
+    DeclarationVisitor declaration_visitor;
 
-      visitor.Visit(global_context.ast());
+    declaration_visitor.Visit(GlobalContext::Get().ast());
+    declaration_visitor.FinalizeStructsAndClasses();
 
-      std::string output_header_path = output_directory;
-      output_header_path += "/builtin-definitions-from-dsl.h";
-      visitor.GenerateHeader(output_header_path);
+    ImplementationVisitor implementation_visitor;
+    for (Namespace* n : GlobalContext::Get().GetNamespaces()) {
+      implementation_visitor.BeginNamespaceFile(n);
     }
 
-    ImplementationVisitor visitor(global_context);
-    for (auto& module : global_context.GetModules()) {
-      visitor.BeginModuleFile(module.second.get());
-    }
+    implementation_visitor.VisitAllDeclarables();
 
-    visitor.Visit(global_context.ast());
+    std::string output_header_path = output_directory;
+    output_header_path += "/builtin-definitions-from-dsl.h";
+    implementation_visitor.GenerateBuiltinDefinitions(output_header_path);
 
-    for (auto& module : global_context.GetModules()) {
-      visitor.EndModuleFile(module.second.get());
-      visitor.GenerateImplementation(output_directory, module.second.get());
+    output_header_path = output_directory + "/class-definitions-from-dsl.h";
+    implementation_visitor.GenerateClassDefinitions(output_header_path);
+
+    for (Namespace* n : GlobalContext::Get().GetNamespaces()) {
+      implementation_visitor.EndNamespaceFile(n);
+      implementation_visitor.GenerateImplementation(output_directory, n);
     }
   }
 

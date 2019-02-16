@@ -163,6 +163,30 @@ std::ostream& operator<<(std::ostream&, CheckParameters const&);
 
 CheckParameters const& CheckParametersOf(Operator const*) V8_WARN_UNUSED_RESULT;
 
+class CheckBoundsParameters final {
+ public:
+  enum Mode { kAbortOnOutOfBounds, kDeoptOnOutOfBounds };
+
+  CheckBoundsParameters(const VectorSlotPair& feedback, Mode mode)
+      : check_parameters_(feedback), mode_(mode) {}
+
+  Mode mode() const { return mode_; }
+  const CheckParameters& check_parameters() const { return check_parameters_; }
+
+ private:
+  CheckParameters check_parameters_;
+  Mode mode_;
+};
+
+bool operator==(CheckBoundsParameters const&, CheckBoundsParameters const&);
+
+size_t hash_value(CheckBoundsParameters const&);
+
+std::ostream& operator<<(std::ostream&, CheckBoundsParameters const&);
+
+CheckBoundsParameters const& CheckBoundsParametersOf(Operator const*)
+    V8_WARN_UNUSED_RESULT;
+
 class CheckIfParameters final {
  public:
   explicit CheckIfParameters(DeoptimizeReason reason,
@@ -679,11 +703,14 @@ class V8_EXPORT_PRIVATE SimplifiedOperatorBuilder final
   const Operator* CheckNotTaggedHole();
   const Operator* CheckNumber(const VectorSlotPair& feedback);
   const Operator* CheckReceiver();
+  const Operator* CheckReceiverOrNullOrUndefined();
   const Operator* CheckSmi(const VectorSlotPair& feedback);
   const Operator* CheckString(const VectorSlotPair& feedback);
   const Operator* CheckSymbol();
 
   const Operator* CheckedFloat64ToInt32(CheckForMinusZeroMode,
+                                        const VectorSlotPair& feedback);
+  const Operator* CheckedFloat64ToInt64(CheckForMinusZeroMode,
                                         const VectorSlotPair& feedback);
   const Operator* CheckedInt32Add();
   const Operator* CheckedInt32Div();
@@ -698,14 +725,19 @@ class V8_EXPORT_PRIVATE SimplifiedOperatorBuilder final
                                          const VectorSlotPair& feedback);
   const Operator* CheckedTaggedToInt32(CheckForMinusZeroMode,
                                        const VectorSlotPair& feedback);
+  const Operator* CheckedTaggedToInt64(CheckForMinusZeroMode,
+                                       const VectorSlotPair& feedback);
   const Operator* CheckedTaggedToTaggedPointer(const VectorSlotPair& feedback);
   const Operator* CheckedTaggedToTaggedSigned(const VectorSlotPair& feedback);
   const Operator* CheckedTruncateTaggedToWord32(CheckTaggedInputMode,
                                                 const VectorSlotPair& feedback);
   const Operator* CheckedUint32Div();
   const Operator* CheckedUint32Mod();
+  const Operator* CheckedUint32Bounds(const VectorSlotPair& feedback,
+                                      CheckBoundsParameters::Mode mode);
   const Operator* CheckedUint32ToInt32(const VectorSlotPair& feedback);
   const Operator* CheckedUint32ToTaggedSigned(const VectorSlotPair& feedback);
+  const Operator* CheckedUint64Bounds(const VectorSlotPair& feedback);
   const Operator* CheckedUint64ToInt32(const VectorSlotPair& feedback);
   const Operator* CheckedUint64ToTaggedSigned(const VectorSlotPair& feedback);
 
@@ -768,6 +800,9 @@ class V8_EXPORT_PRIVATE SimplifiedOperatorBuilder final
   const Operator* LoadField(FieldAccess const&);
   const Operator* StoreField(FieldAccess const&);
 
+  const Operator* LoadMessage();
+  const Operator* StoreMessage();
+
   // load-element [base + index]
   const Operator* LoadElement(ElementAccess const&);
 
@@ -790,13 +825,13 @@ class V8_EXPORT_PRIVATE SimplifiedOperatorBuilder final
   // load-typed-element buffer, [base + external + index]
   const Operator* LoadTypedElement(ExternalArrayType const&);
 
-  // load-data-view-element buffer, [base + index]
+  // load-data-view-element buffer, [base + byte_offset + index]
   const Operator* LoadDataViewElement(ExternalArrayType const&);
 
   // store-typed-element buffer, [base + external + index], value
   const Operator* StoreTypedElement(ExternalArrayType const&);
 
-  // store-data-view-element buffer, [base + index], value
+  // store-data-view-element buffer, [base + byte_offset + index], value
   const Operator* StoreDataViewElement(ExternalArrayType const&);
 
   // Abort (for terminating execution on internal error).

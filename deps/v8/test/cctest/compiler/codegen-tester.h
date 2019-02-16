@@ -5,7 +5,7 @@
 #ifndef V8_CCTEST_COMPILER_CODEGEN_TESTER_H_
 #define V8_CCTEST_COMPILER_CODEGEN_TESTER_H_
 
-#include "src/compiler/instruction-selector.h"
+#include "src/compiler/backend/instruction-selector.h"
 #include "src/compiler/pipeline.h"
 #include "src/compiler/raw-machine-assembler.h"
 #include "src/optimized-compilation-info.h"
@@ -59,11 +59,11 @@ class RawMachineAssemblerTester : public HandleAndZoneScope,
 
   ~RawMachineAssemblerTester() override = default;
 
-  void CheckNumber(double expected, Object* number) {
+  void CheckNumber(double expected, Object number) {
     CHECK(this->isolate()->factory()->NewNumber(expected)->SameValue(number));
   }
 
-  void CheckString(const char* expected, Object* string) {
+  void CheckString(const char* expected, Object string) {
     CHECK(
         this->isolate()->factory()->InternalizeUtf8String(expected)->SameValue(
             string));
@@ -139,7 +139,10 @@ class BufferedRawMachineAssemblerTester
 
   template <typename... Params>
   ReturnType Call(Params... p) {
+    uintptr_t zap_data[] = {kZapValue, kZapValue};
     ReturnType return_value;
+    STATIC_ASSERT(sizeof(return_value) <= sizeof(zap_data));
+    MemCopy(&return_value, &zap_data, sizeof(return_value));
     CSignature::VerifyParams<Params...>(test_graph_signature_);
     CallHelper<int32_t>::Call(reinterpret_cast<void*>(&p)...,
                               reinterpret_cast<void*>(&return_value));

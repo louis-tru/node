@@ -8,7 +8,6 @@ import sys
 import time
 
 from . import base
-from ..local import junit_output
 
 
 def print_failure_header(test):
@@ -20,15 +19,6 @@ def print_failure_header(test):
     'label': test,
     'negative': negative_marker,
   }
-
-
-class TestsCounter(base.TestProcObserver):
-  def __init__(self):
-    super(TestsCounter, self).__init__()
-    self.total = 0
-
-  def _on_next_test(self, test):
-    self.total += 1
 
 
 class ResultsTracker(base.TestProcObserver):
@@ -66,10 +56,6 @@ class SimpleProgressIndicator(ProgressIndicator):
     self._requirement = base.DROP_PASS_OUTPUT
 
     self._failed = []
-    self._total = 0
-
-  def _on_next_test(self, test):
-    self._total += 1
 
   def _on_result_for(self, test, result):
     # TODO(majeski): Support for dummy/grouped results
@@ -127,7 +113,9 @@ class VerboseProgressIndicator(SimpleProgressIndicator):
         outcome = 'FAIL'
     else:
       outcome = 'pass'
-    self._print('Done running %s: %s' % (test, outcome))
+
+    self._print('Done running %s %s: %s' % (
+      test, test.variant or 'default', outcome))
 
   def _on_heartbeat(self):
     if time.time() - self._last_printed_time > 30:
@@ -142,6 +130,7 @@ class DotsProgressIndicator(SimpleProgressIndicator):
     self._count = 0
 
   def _on_result_for(self, test, result):
+    super(DotsProgressIndicator, self)._on_result_for(test, result)
     # TODO(majeski): Support for dummy/grouped results
     self._count += 1
     if self._count > 1 and self._count % 50 == 1:
@@ -170,12 +159,11 @@ class CompactProgressIndicator(ProgressIndicator):
     self._last_status_length = 0
     self._start_time = time.time()
 
-    self._total = 0
     self._passed = 0
     self._failed = 0
 
-  def _on_next_test(self, test):
-    self._total += 1
+  def set_test_count(self, test_count):
+    self._total = test_count
 
   def _on_result_for(self, test, result):
     # TODO(majeski): Support for dummy/grouped results
@@ -210,10 +198,10 @@ class CompactProgressIndicator(ProgressIndicator):
   def _print_progress(self, name):
     self._clear_line(self._last_status_length)
     elapsed = time.time() - self._start_time
-    if not self._total:
-      progress = 0
-    else:
+    if self._total:
       progress = (self._passed + self._failed) * 100 // self._total
+    else:
+      progress = 0
     status = self._templates['status_line'] % {
       'passed': self._passed,
       'progress': progress,
@@ -265,45 +253,6 @@ class MonochromeProgressIndicator(CompactProgressIndicator):
 
   def _clear_line(self, last_length):
     print ("\r" + (" " * last_length) + "\r"),
-
-
-class JUnitTestProgressIndicator(ProgressIndicator):
-  def __init__(self, junitout, junittestsuite):
-    super(JUnitTestProgressIndicator, self).__init__()
-    self._requirement = base.DROP_PASS_STDOUT
-
-    self.outputter = junit_output.JUnitTestOutput(junittestsuite)
-    if junitout:
-      self.outfile = open(junitout, "w")
-    else:
-      self.outfile = sys.stdout
-
-  def _on_result_for(self, test, result):
-    # TODO(majeski): Support for dummy/grouped results
-    fail_text = ""
-    output = result.output
-    if result.has_unexpected_output:
-      stdout = output.stdout.strip()
-      if len(stdout):
-        fail_text += "stdout:\n%s\n" % stdout
-      stderr = output.stderr.strip()
-      if len(stderr):
-        fail_text += "stderr:\n%s\n" % stderr
-      fail_text += "Command: %s" % result.cmd.to_string()
-      if output.HasCrashed():
-        fail_text += "exit code: %d\n--- CRASHED ---" % output.exit_code
-      if output.HasTimedOut():
-        fail_text += "--- TIMEOUT ---"
-    self.outputter.HasRunTest(
-        test_name=str(test),
-        test_cmd=result.cmd.to_string(relative=True),
-        test_duration=output.duration,
-        test_failure=fail_text)
-
-  def finished(self):
-    self.outputter.FinishAndWrite(self.outfile)
-    if self.outfile != sys.stdout:
-      self.outfile.close()
 
 
 class JsonTestProgressIndicator(ProgressIndicator):

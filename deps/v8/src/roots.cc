@@ -3,10 +3,19 @@
 // found in the LICENSE file.
 
 #include "src/roots.h"
+
 #include "src/elements-kind.h"
+#include "src/objects-inl.h"
+#include "src/visitors.h"
 
 namespace v8 {
 namespace internal {
+
+const char* RootsTable::root_names_[RootsTable::kEntriesCount] = {
+#define ROOT_NAME(type, name, CamelName) #name,
+    ROOT_LIST(ROOT_NAME)
+#undef ROOT_NAME
+};
 
 // static
 RootIndex RootsTable::RootIndexForFixedTypedArray(
@@ -49,6 +58,32 @@ RootIndex RootsTable::RootIndexForEmptyFixedTypedArray(
       UNREACHABLE();
   }
 }
+
+void ReadOnlyRoots::Iterate(RootVisitor* visitor) {
+  visitor->VisitRootPointers(Root::kReadOnlyRootList, nullptr,
+                             roots_table_.read_only_roots_begin(),
+                             roots_table_.read_only_roots_end());
+  visitor->Synchronize(VisitorSynchronization::kReadOnlyRootList);
+}
+
+#ifdef DEBUG
+
+bool ReadOnlyRoots::CheckType(RootIndex index) const {
+  Object root(roots_table_[index]);
+  switch (index) {
+#define CHECKTYPE(Type, name, CamelName) \
+  case RootIndex::k##CamelName:          \
+    return root->Is##Type();
+    READ_ONLY_ROOT_LIST(CHECKTYPE)
+#undef CHECKTYPE
+
+    default:
+      UNREACHABLE();
+      return false;
+  }
+}
+
+#endif  // DEBUG
 
 }  // namespace internal
 }  // namespace v8

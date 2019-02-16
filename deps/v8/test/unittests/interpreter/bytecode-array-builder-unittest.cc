@@ -7,12 +7,14 @@
 #include "src/v8.h"
 
 #include "src/ast/scopes.h"
+#include "src/hash-seed-inl.h"
 #include "src/interpreter/bytecode-array-builder.h"
 #include "src/interpreter/bytecode-array-iterator.h"
 #include "src/interpreter/bytecode-jump-table.h"
 #include "src/interpreter/bytecode-label.h"
 #include "src/interpreter/bytecode-register-allocator.h"
 #include "src/objects-inl.h"
+#include "src/objects/smi.h"
 #include "test/unittests/interpreter/bytecode-utils.h"
 #include "test/unittests/test-utils.h"
 
@@ -33,7 +35,7 @@ TEST_F(BytecodeArrayBuilderTest, AllBytecodesGenerated) {
   BytecodeArrayBuilder builder(zone(), 1, 131, &feedback_spec);
   Factory* factory = isolate()->factory();
   AstValueFactory ast_factory(zone(), isolate()->ast_string_constants(),
-                              isolate()->heap()->HashSeed());
+                              HashSeed(isolate()));
   DeclarationScope scope(zone(), &ast_factory);
 
   CHECK_EQ(builder.locals_count(), 131);
@@ -54,7 +56,7 @@ TEST_F(BytecodeArrayBuilderTest, AllBytecodesGenerated) {
       .CreateArguments(CreateArgumentsType::kRestParameter);
 
   // Emit constant loads.
-  builder.LoadLiteral(Smi::kZero)
+  builder.LoadLiteral(Smi::zero())
       .StoreAccumulatorInRegister(reg)
       .LoadLiteral(Smi::FromInt(8))
       .CompareOperation(Token::Value::EQ, reg,
@@ -179,7 +181,7 @@ TEST_F(BytecodeArrayBuilderTest, AllBytecodesGenerated) {
   // Emit literal creation operations.
   builder.CreateRegExpLiteral(ast_factory.GetOneByteString("a"), 0, 0);
   builder.CreateArrayLiteral(0, 0, 0);
-  builder.CreateObjectLiteral(0, 0, 0, reg);
+  builder.CreateObjectLiteral(0, 0, 0);
 
   // Emit tagged template operations.
   builder.GetTemplateObject(0, 0);
@@ -380,7 +382,7 @@ TEST_F(BytecodeArrayBuilderTest, AllBytecodesGenerated) {
       .CreateArrayLiteral(0, 0, 0)
       .CreateEmptyArrayLiteral(0)
       .CreateArrayFromIterable()
-      .CreateObjectLiteral(0, 0, 0, reg)
+      .CreateObjectLiteral(0, 0, 0)
       .CreateEmptyObjectLiteral()
       .CloneObject(reg, 0, 0);
 
@@ -438,7 +440,7 @@ TEST_F(BytecodeArrayBuilderTest, AllBytecodesGenerated) {
   ast_factory.Internalize(isolate());
   Handle<BytecodeArray> the_array = builder.ToBytecodeArray(isolate());
   CHECK_EQ(the_array->frame_size(),
-           builder.total_register_count() * kPointerSize);
+           builder.total_register_count() * kSystemPointerSize);
 
   // Build scorecard of bytecodes encountered in the BytecodeArray.
   std::vector<int> scorecard(Bytecodes::ToByte(Bytecode::kLast) + 1);
@@ -488,12 +490,12 @@ TEST_F(BytecodeArrayBuilderTest, FrameSizesLookGood) {
       BytecodeArrayBuilder builder(zone(), 1, locals);
       BytecodeRegisterAllocator* allocator(builder.register_allocator());
       for (int i = 0; i < locals; i++) {
-        builder.LoadLiteral(Smi::kZero);
+        builder.LoadLiteral(Smi::zero());
         builder.StoreAccumulatorInRegister(Register(i));
       }
       for (int i = 0; i < temps; i++) {
         Register temp = allocator->NewRegister();
-        builder.LoadLiteral(Smi::kZero);
+        builder.LoadLiteral(Smi::zero());
         builder.StoreAccumulatorInRegister(temp);
         // Ensure temporaries are used so not optimized away by the
         // register optimizer.
@@ -503,7 +505,7 @@ TEST_F(BytecodeArrayBuilderTest, FrameSizesLookGood) {
 
       Handle<BytecodeArray> the_array = builder.ToBytecodeArray(isolate());
       int total_registers = locals + temps;
-      CHECK_EQ(the_array->frame_size(), total_registers * kPointerSize);
+      CHECK_EQ(the_array->frame_size(), total_registers * kSystemPointerSize);
     }
   }
 }
@@ -533,7 +535,7 @@ TEST_F(BytecodeArrayBuilderTest, Parameters) {
 TEST_F(BytecodeArrayBuilderTest, Constants) {
   BytecodeArrayBuilder builder(zone(), 1, 0);
   AstValueFactory ast_factory(zone(), isolate()->ast_string_constants(),
-                              isolate()->heap()->HashSeed());
+                              HashSeed(isolate()));
 
   double heap_num_1 = 3.14;
   double heap_num_2 = 5.2;

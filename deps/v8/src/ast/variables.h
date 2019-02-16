@@ -59,7 +59,7 @@ class Variable final : public ZoneObject {
     return ForceContextAllocationField::decode(bit_field_);
   }
   void ForceContextAllocation() {
-    DCHECK(IsUnallocated() || IsContextSlot() ||
+    DCHECK(IsUnallocated() || IsContextSlot() || IsLookupSlot() ||
            location() == VariableLocation::MODULE);
     bit_field_ = ForceContextAllocationField::update(bit_field_, true);
   }
@@ -131,10 +131,14 @@ class Variable final : public ZoneObject {
     return kind() != SLOPPY_FUNCTION_NAME_VARIABLE || is_strict(language_mode);
   }
 
-  bool is_function() const { return kind() == FUNCTION_VARIABLE; }
   bool is_this() const { return kind() == THIS_VARIABLE; }
   bool is_sloppy_function_name() const {
     return kind() == SLOPPY_FUNCTION_NAME_VARIABLE;
+  }
+
+  bool is_parameter() const { return kind() == PARAMETER_VARIABLE; }
+  bool is_sloppy_block_function() {
+    return kind() == SLOPPY_BLOCK_FUNCTION_VARIABLE;
   }
 
   Variable* local_if_not_shadowed() const {
@@ -173,6 +177,13 @@ class Variable final : public ZoneObject {
     bit_field_ = LocationField::update(bit_field_, location);
     DCHECK_EQ(location, this->location());
     index_ = index;
+  }
+
+  void MakeParameterNonSimple() {
+    DCHECK(is_parameter());
+    bit_field_ = VariableModeField::update(bit_field_, VariableMode::kLet);
+    bit_field_ =
+        InitializationFlagField::update(bit_field_, kNeedsInitialization);
   }
 
   static InitializationFlag DefaultInitializationFlag(VariableMode mode) {

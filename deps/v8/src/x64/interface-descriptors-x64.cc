@@ -6,6 +6,8 @@
 
 #include "src/interface-descriptors.h"
 
+#include "src/frames.h"
+
 namespace v8 {
 namespace internal {
 
@@ -72,12 +74,6 @@ void TypeofDescriptor::InitializePlatformSpecific(
 // static
 const Register TypeConversionDescriptor::ArgumentRegister() { return rax; }
 
-void CallFunctionDescriptor::InitializePlatformSpecific(
-    CallInterfaceDescriptorData* data) {
-  Register registers[] = {rdi};
-  data->InitializePlatformSpecific(arraysize(registers), registers);
-}
-
 void CallTrampolineDescriptor::InitializePlatformSpecific(
     CallInterfaceDescriptorData* data) {
   // rax : number of arguments
@@ -102,6 +98,14 @@ void CallForwardVarargsDescriptor::InitializePlatformSpecific(
   // rcx : start index (to support rest parameters)
   // rdi : the target to call
   Register registers[] = {rdi, rax, rcx};
+  data->InitializePlatformSpecific(arraysize(registers), registers);
+}
+
+void CallFunctionTemplateDescriptor::InitializePlatformSpecific(
+    CallInterfaceDescriptorData* data) {
+  // rdx: the function template info
+  // rcx: number of arguments (on the stack, not including receiver)
+  Register registers[] = {rdx, rcx};
   data->InitializePlatformSpecific(arraysize(registers), registers);
 }
 
@@ -209,10 +213,10 @@ void ArgumentsAdaptorDescriptor::InitializePlatformSpecific(
 void ApiCallbackDescriptor::InitializePlatformSpecific(
     CallInterfaceDescriptorData* data) {
   Register registers[] = {
-      JavaScriptFrame::context_register(),  // callee context
-      rbx,                                  // call_data
-      rcx,                                  // holder
-      rdx,                                  // api_function_address
+      rdx,  // api function address
+      rcx,  // argument count (not including receiver)
+      rbx,  // call data
+      rdi,  // holder
   };
   data->InitializePlatformSpecific(arraysize(registers), registers);
 }
@@ -261,6 +265,12 @@ void FrameDropperTrampolineDescriptor::InitializePlatformSpecific(
   Register registers[] = {
       rbx,  // loaded new FP
   };
+  data->InitializePlatformSpecific(arraysize(registers), registers);
+}
+
+void RunMicrotasksEntryDescriptor::InitializePlatformSpecific(
+    CallInterfaceDescriptorData* data) {
+  Register registers[] = {arg_reg_1, arg_reg_2};
   data->InitializePlatformSpecific(arraysize(registers), registers);
 }
 

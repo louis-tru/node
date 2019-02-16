@@ -123,8 +123,6 @@ class AccessorAssembler : public CodeStubAssembler {
 
   void JumpIfDataProperty(Node* details, Label* writable, Label* readonly);
 
-  void BranchIfStrictMode(Node* vector, Node* slot, Label* if_strict);
-
   void InvalidateValidityCellIfPrototype(Node* map, Node* bitfield2 = nullptr);
 
   void OverwriteExistingFastDataProperty(Node* object, Node* object_map,
@@ -148,9 +146,10 @@ class AccessorAssembler : public CodeStubAssembler {
                          TVariable<MaybeObject>* var_handler, Label* if_handler,
                          Label* miss, ExitPoint* exit_point);
 
-  TNode<Object> LoadDescriptorValue(TNode<Map> map, Node* descriptor);
+  TNode<Object> LoadDescriptorValue(TNode<Map> map,
+                                    TNode<IntPtrT> descriptor_entry);
   TNode<MaybeObject> LoadDescriptorValueOrFieldType(
-      TNode<Map> map, SloppyTNode<IntPtrT> descriptor);
+      TNode<Map> map, TNode<IntPtrT> descriptor_entry);
 
   void LoadIC_Uninitialized(const LoadICParameters* p);
 
@@ -174,7 +173,7 @@ class AccessorAssembler : public CodeStubAssembler {
   void HandlePolymorphicCase(Node* receiver_map, TNode<WeakFixedArray> feedback,
                              Label* if_handler,
                              TVariable<MaybeObject>* var_handler,
-                             Label* if_miss, int min_feedback_capacity);
+                             Label* if_miss);
 
   // LoadIC implementation.
   void HandleLoadICHandlerCase(
@@ -273,8 +272,6 @@ class AccessorAssembler : public CodeStubAssembler {
                            const OnFoundOnReceiver& on_found_on_receiver,
                            Label* miss, ICMode ic_mode);
 
-  Node* GetLanguageMode(Node* vector, Node* slot);
-
   Node* PrepareValueForStore(Node* handler_word, Node* holder,
                              Representation representation, Node* value,
                              Label* bailout);
@@ -298,6 +295,7 @@ class AccessorAssembler : public CodeStubAssembler {
                        Label* miss, ExitPoint* exit_point);
   void NameDictionaryNegativeLookup(Node* object, SloppyTNode<Name> name,
                                     Label* miss);
+  TNode<BoolT> IsPropertyDetailsConst(Node* details);
 
   // Stub cache access helpers.
 
