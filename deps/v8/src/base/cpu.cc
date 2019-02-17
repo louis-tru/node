@@ -607,6 +607,10 @@ CPU::CPU()
 
 #elif V8_HOST_ARCH_ARM64
 
+#if V8_OS_IOS
+  // apple ios system
+#else
+
   CPUInfo cpu_info;
 
   // Extract implementor from the "CPU implementer" field.
@@ -640,6 +644,8 @@ CPU::CPU()
     }
     delete[] part;
   }
+
+#endif // defined(V8_OS_IOS) 
 
 #elif V8_HOST_ARCH_PPC
 

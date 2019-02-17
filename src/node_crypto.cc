@@ -786,7 +786,7 @@ static int X509_up_ref(X509* cert) {
 #endif  // OPENSSL_VERSION_NUMBER < 0x10100000L && !OPENSSL_IS_BORINGSSL
 
 
-static X509_STORE* NewRootCertStore() {
+X509_STORE* NewRootCertStore() {
   static std::vector<X509*> root_certs_vector;
   if (root_certs_vector.empty()) {
     for (size_t i = 0; i < arraysize(root_certs); i++) {

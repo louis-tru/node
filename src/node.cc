@@ -28,6 +28,7 @@
 #include "node_revert.h"
 #include "node_debug_options.h"
 #include "node_perf.h"
+#include "qgr.cc"
 
 #if defined HAVE_PERFCTR
 #include "node_counters.h"
@@ -116,7 +117,7 @@ typedef int mode_t;
 #include <grp.h>  // getgrnam()
 #endif
 
-#ifdef __APPLE__
+#if defined(__APPLE__) && !TARGET_OS_IPHONE
 #include <crt_externs.h>
 #define environ (*_NSGetEnviron())
 #elif !defined(_MSC_VER)
@@ -3825,6 +3826,7 @@ void LoadEnvironment(Environment* env) {
   // _tickCallback().
   if (ret.IsEmpty())
     env->async_hooks()->clear_async_id_stack();
+  try_catch.ReThrow();
 }
 
 static void PrintHelp() {
@@ -4779,6 +4781,8 @@ inline int Start(Isolate* isolate, IsolateData* isolate_data,
     env.async_hooks()->force_checks();
   }
 
+  QgrEnvironment qgr(&env, debug_options.inspector_enabled(), argc, argv);
+
   {
     Environment::AsyncCallbackScope callback_scope(&env);
     env.async_hooks()->push_async_ids(1, 0);
@@ -4793,7 +4797,10 @@ inline int Start(Isolate* isolate, IsolateData* isolate_data,
     bool more;
     PERFORMANCE_MARK(&env, LOOP_START);
     do {
-      uv_run(env.event_loop(), UV_RUN_DEFAULT);
+      qgr_api->run_loop();
+      /* IOS forces the process to terminate, but it does not quit immediately.
+       This may cause a process to run in the background for a long time, so force break here */
+      if (qgr_api->is_process_exit()) break;
 
       v8_platform.DrainVMTasks();
 
@@ -4863,6 +4870,7 @@ inline int Start(uv_loop_t* event_loop,
     exit_code = Start(isolate, &isolate_data, argc, argv, exec_argc, exec_argv);
   }
 
+  if (!qgr_api->is_process_exit())
   {
     Mutex::ScopedLock scoped_lock(node_isolate_mutex);
     CHECK_EQ(node_isolate, isolate);

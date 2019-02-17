@@ -120,7 +120,7 @@ class ObjectWrap {
       const v8::WeakCallbackInfo<ObjectWrap>& data) {
     ObjectWrap* wrap = data.GetParameter();
     assert(wrap->refs_ == 0);
-    wrap->handle_.Reset();
+    wrap->handle_.V8_DEATH_RESET();
     delete wrap;
   }
 

@@ -68,7 +68,7 @@
       'targets': [
         {
           'target_name': 'zlib',
-          'type': 'static_library',
+          'type': 'none',
           'direct_dependent_settings': {
             'defines': [
               'USE_SYSTEM_ZLIB',

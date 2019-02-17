@@ -11,7 +11,7 @@
 #include "zlib.h"
 
 #include <sstream>
-#include <unicode/unistr.h>
+#include "qgr.h"
 
 #include <string.h>
 #include <vector>
@@ -84,18 +84,11 @@ std::string StringViewToUtf8(const StringView& view) {
   static_assert(sizeof(*source) == sizeof(*unicodeSource),
                 "sizeof(*source) == sizeof(*unicodeSource)");
 
-  size_t result_length = view.length() * sizeof(*source);
-  std::string result(result_length, '\0');
-  UnicodeString utf16(unicodeSource, view.length());
-  // ICU components for std::string compatibility are not enabled in build...
-  bool done = false;
-  while (!done) {
-    CheckedArrayByteSink sink(&result[0], result_length);
-    utf16.toUTF8(sink);
-    result_length = sink.NumberOfBytesAppended();
-    result.resize(result_length);
-    done = !sink.Overflowed();
-  }
+  int len;
+  auto buff = qgr_api->encoding_to_utf8(source, (uint)view.length(), &len);
+
+  auto result = std::string(buff, len);
+  free(buff);
   return result;
 }
 
@@ -123,11 +116,14 @@ void ReleasePairOnAsyncClose(uv_handle_t* async) {
 }  // namespace
 
 std::unique_ptr<StringBuffer> Utf8ToStringView(const std::string& message) {
-  UnicodeString utf16 =
-      UnicodeString::fromUTF8(StringPiece(message.data(), message.length()));
-  StringView view(reinterpret_cast<const uint16_t*>(utf16.getBuffer()),
-                  utf16.length());
-  return StringBuffer::create(view);
+  int len;
+  auto buff = qgr_api->decoding_utf8_to_uint16(message.c_str(),
+                                               (uint)message.length(), &len);
+  StringView view(reinterpret_cast<const uint16_t*>(buff), len);
+
+  auto s = StringBuffer::create(view);
+  free(buff);
+  return s;
 }
 
 

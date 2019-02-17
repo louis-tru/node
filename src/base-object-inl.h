@@ -68,7 +68,7 @@ template <typename Type>
 inline void BaseObject::WeakCallback(
     const v8::WeakCallbackInfo<Type>& data) {
   Type* self = data.GetParameter();
-  self->persistent().Reset();
+  self->persistent().V8_DEATH_RESET();
   delete self;
 }
 

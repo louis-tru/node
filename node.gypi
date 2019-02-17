@@ -22,8 +22,8 @@
     }],
     [ 'node_use_bundled_v8=="true"', {
       'dependencies': [
-        'deps/v8/src/v8.gyp:v8',
-        'deps/v8/src/v8.gyp:v8_libplatform'
+        '../v8-link/v8-link.gyp:v8-link',
+        '../v8-link/v8-link.gyp:v8_libplatform-link'
       ],
     }],
     [ 'node_use_v8_platform=="true"', {
@@ -121,7 +121,7 @@
             './deps/openssl/openssl.gyp:openssl',
 
             # For tests
-            './deps/openssl/openssl.gyp:openssl-cli',
+            #'./deps/openssl/openssl.gyp:openssl-cli',
           ],
           # Do not let unused OpenSSL symbols to slip away
           'conditions': [

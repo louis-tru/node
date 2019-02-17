@@ -404,7 +404,7 @@ class Reference : private Finalizer {
  private:
   static void FinalizeCallback(const v8::WeakCallbackInfo<Reference>& data) {
     Reference* reference = data.GetParameter();
-    reference->_persistent.Reset();
+    reference->_persistent.V8_DEATH_RESET();
 
     // Check before calling the finalize callback, because the callback might
     // delete it.

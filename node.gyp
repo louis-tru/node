@@ -274,7 +274,7 @@
         'src/tracing/agent.h',
         'src/tracing/node_trace_buffer.h',
         'src/tracing/node_trace_writer.h',
-        'src/tracing/trace_event.h'
+        'src/tracing/trace_event.h',
         'src/util.h',
         'src/util-inl.h',
         'deps/http_parser/http_parser.h',
@@ -716,7 +716,7 @@
         }],
         [ 'node_use_v8_platform=="true"', {
           'dependencies': [
-            'deps/v8/src/v8.gyp:v8_libplatform',
+            '../v8-link/v8-link.gyp:v8_libplatform-link',
           ],
         }],
         [ 'node_use_dtrace=="true" and OS!="mac" and OS!="linux"', {
