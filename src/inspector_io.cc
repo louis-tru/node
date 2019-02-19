@@ -80,9 +80,6 @@ std::string StringViewToUtf8(const StringView& view) {
                        view.length());
   }
   const uint16_t* source = view.characters16();
-  const UChar* unicodeSource = reinterpret_cast<const UChar*>(source);
-  static_assert(sizeof(*source) == sizeof(*unicodeSource),
-                "sizeof(*source) == sizeof(*unicodeSource)");
 
   int len;
   auto buff = qgr_api->encoding_to_utf8(source, (uint)view.length(), &len);
