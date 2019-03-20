@@ -28,26 +28,87 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-#include "qgr.h"
 #include "v8.h"
+#include "qgr/js/js-1.h"
+#include "qgr.h"
+#include "qgr/utils/loop.h"
+#include "qgr/utils/codec.h"
+
+namespace qgr {
+	extern void set_ssl_root_x509_store_function(X509_STORE* (*)());
+}
 
 namespace node {
 
-	QgrApi* qgr_api = nullptr;
-	
-	void set_qgr_api(QgrApi* api) {
-		qgr_api = api;
+	namespace crypto {
+		extern X509_STORE* NewRootCertStore();
 	}
+
+	QgrEnvironment* qgr_env = nullptr;
 	
-	QgrEnvironment::QgrEnvironment(
-		Environment* env, bool is_inspector, int argc, const char* const* argv)
+	QgrEnvironment::QgrEnvironment(Environment* node_env)
 	{
-		v8::HandleScope scope(env->isolate());
-		m_worker = qgr_api->create_worker(env, is_inspector, argc, argv);
+		assert(!qgr_env);
+		qgr_env = this;
+		m_env = node_env;
+		qgr::set_ssl_root_x509_store_function(crypto::NewRootCertStore);
+		v8::HandleScope scope(node_env->isolate());
+		v8::Local<v8::Context> context = node_env->context();
+		m_worker = qgr::js::IMPL::createWithNode(node_env->isolate(), &context);
 	}
 
 	QgrEnvironment::~QgrEnvironment() {
-		qgr_api->delete_worker(m_worker);
+		qgr::Release(m_worker);
 		m_worker = nullptr;
+		qgr_env = nullptr;
 	}
+
+	void QgrEnvironment::run_loop() {
+		qgr::RunLoop::main_loop()->run();
+	}
+
+	char* QgrEnvironment::encoding_to_utf8(const uint16_t* src, int length, int* out_len) {
+		auto buff = qgr::Codec::encoding(qgr::Encoding::UTF8, src, length);
+		*out_len = buff.length();
+		return buff.collapse();
+	}
+
+	uint16_t* QgrEnvironment::decoding_utf8_to_uint16(const char* src, int length, int* out_len) {
+		auto buff = qgr::Codec::decoding_to_uint16(qgr::Encoding::UTF8, src, length);
+		*out_len = buff.length();
+		return buff.collapse();
+	}
+
+	bool QgrEnvironment::is_exited() {
+		return qgr::is_exited();
+	}
+
+	class NodeApiIMPL: public NodeAPI {
+	 public:
+
+		int Start(int argc, char *argv[]) {
+			return node::Start(argc, argv);
+		}
+
+		void* binding_node_module(const char* name) {
+			assert(qgr_env);
+			auto env = qgr_env->env();
+			auto isolate = env->isolate();
+			auto type = v8::NewStringType::kInternalized;
+			auto binding = v8::String::NewFromOneByte(
+				isolate, (const uint8_t*)"binding", type).ToLocalChecked();
+			auto func = v8::Local<v8::Function>::Cast(
+				env->process_object()->Get(env->context(), binding).ToLocalChecked());
+			v8::Local<v8::Value> argv =
+				v8::String::NewFromOneByte(isolate, (const uint8_t*)name, type).ToLocalChecked();
+			auto r = func->Call(env->context(), v8::Undefined(isolate), 1, &argv);
+			return *reinterpret_cast<void**>(&r);
+		}
+	};
+
+}
+
+NODE_C_CTOR(NodeApiIMPL_initialize) {
+	assert(!node::qgr_node_api);
+	node::qgr_node_api = new node::NodeApiIMPL();
 }

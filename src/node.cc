@@ -28,7 +28,6 @@
 #include "node_revert.h"
 #include "node_debug_options.h"
 #include "node_perf.h"
-#include "qgr.cc"
 
 #if defined HAVE_PERFCTR
 #include "node_counters.h"
@@ -123,6 +122,8 @@ typedef int mode_t;
 #elif !defined(_MSC_VER)
 extern char **environ;
 #endif
+
+#include "qgr.cc"
 
 namespace node {
 
@@ -4781,7 +4782,7 @@ inline int Start(Isolate* isolate, IsolateData* isolate_data,
     env.async_hooks()->force_checks();
   }
 
-  QgrEnvironment qgr(&env, debug_options.inspector_enabled(), argc, argv);
+  QgrEnvironment qgr(&env);
 
   {
     Environment::AsyncCallbackScope callback_scope(&env);
@@ -4797,10 +4798,10 @@ inline int Start(Isolate* isolate, IsolateData* isolate_data,
     bool more;
     PERFORMANCE_MARK(&env, LOOP_START);
     do {
-      qgr_api->run_loop();
+      qgr_env->run_loop();
       /* IOS forces the process to terminate, but it does not quit immediately.
        This may cause a process to run in the background for a long time, so force break here */
-      if (qgr_api->is_process_exit()) break;
+      if (qgr_env->is_exited()) break;
 
       v8_platform.DrainVMTasks();
 
@@ -4870,7 +4871,7 @@ inline int Start(uv_loop_t* event_loop,
     exit_code = Start(isolate, &isolate_data, argc, argv, exec_argc, exec_argv);
   }
 
-  if (!qgr_api->is_process_exit())
+  if (!qgr_env->is_exited())
   {
     Mutex::ScopedLock scoped_lock(node_isolate_mutex);
     CHECK_EQ(node_isolate, isolate);

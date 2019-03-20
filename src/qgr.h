@@ -40,28 +40,30 @@ namespace qgr {
 namespace node {
 
 	class Environment;
-	class QgrApi {
-	 public:
-		virtual qgr::js::Worker* create_worker(
-			Environment* env, bool is_inspector,int argc, const char* const* arg) = 0;
-		virtual void delete_worker(qgr::js::Worker* worker) = 0;
-		virtual void run_loop() = 0;
-		virtual char* encoding_to_utf8(const uint16_t* src, int length, int* out_len) = 0;
-		virtual uint16_t* decoding_utf8_to_uint16(const char* src, int length, int* out_len) = 0;
-		virtual void print(const char* msg, ...) = 0;
-		virtual bool is_process_exit() = 0;
-	};
-
-	extern QgrApi* qgr_api;
-	extern void set_qgr_api(QgrApi* api);
 
 	class QgrEnvironment {
 	 public:
-		QgrEnvironment(Environment* env, bool is_inspector, int argc, const char* const* argv);
+		QgrEnvironment(Environment* env);
 		~QgrEnvironment();
+		inline qgr::js::Worker* worker() { return m_worker; }
+		inline Environment* env() { return m_env; }
+		void run_loop();
+		char* encoding_to_utf8(const uint16_t* src, int length, int* out_len);
+		uint16_t* decoding_utf8_to_uint16(const char* src, int length, int* out_len);
+		bool is_exited();
 	 private:
 		qgr::js::Worker* m_worker;
+		Environment* m_env;
 	};
+
+	class NodeAPI {
+	 public:
+		virtual int Start(int argc, char *argv[]) = 0;
+		virtual void* binding_node_module(const char* name) = 0;
+	};
+
+	extern QgrEnvironment* qgr_env;
+	extern NodeAPI* qgr_node_api;
 }
 
 #endif
