@@ -22,8 +22,8 @@
     }],
     [ 'node_use_bundled_v8=="true"', {
       'dependencies': [
-        'deps/v8.gyp:v8',
-        'deps/v8.gyp:v8_libplatform',
+        'deps/v8/src/v8.gyp:v8',
+        'deps/v8/src/v8_libplatform',
       ],
     }],
     [ 'node_use_v8_platform=="true"', {
