@@ -29,13 +29,15 @@
  * ***** END LICENSE BLOCK ***** */
 
 #include "v8.h"
-#include "qgr/js/js-1.h"
 #include "qgr.h"
-#include "qgr/utils/loop.h"
-#include "qgr/utils/codec.h"
+
+typedef struct x509_store_st X509_STORE;
 
 namespace qgr {
-	extern void set_ssl_root_x509_store_function(X509_STORE* (*)());
+	void set_ssl_root_x509_store_function(X509_STORE* (*)());
+	namespace js {
+		Worker* createWorkerWithNode(void* isolate, void* context);
+	}
 }
 
 namespace node {
@@ -44,43 +46,19 @@ namespace node {
 		extern X509_STORE* NewRootCertStore();
 	}
 
-	QgrEnvironment* qgr_env = nullptr;
-	
-	QgrEnvironment::QgrEnvironment(Environment* node_env)
+	QgrEnvironment::QgrEnvironment(Environment* env)
 	{
-		assert(!qgr_env);
+		assert(!env);
 		qgr_env = this;
-		m_env = node_env;
+		m_env = env;
 		qgr::set_ssl_root_x509_store_function(crypto::NewRootCertStore);
-		v8::HandleScope scope(node_env->isolate());
-		v8::Local<v8::Context> context = node_env->context();
-		m_worker = qgr::js::IMPL::createWithNode(node_env->isolate(), &context);
+		v8::HandleScope scope(env->isolate());
+		v8::Local<v8::Context> context = env->context();
+		m_worker = qgr::js::createWorkerWithNode(env->isolate(), &context);
 	}
 
-	QgrEnvironment::~QgrEnvironment() {
-		qgr::Release(m_worker);
-		m_worker = nullptr;
-		qgr_env = nullptr;
-	}
-
-	void QgrEnvironment::run_loop() {
-		qgr::RunLoop::main_loop()->run();
-	}
-
-	char* QgrEnvironment::encoding_to_utf8(const uint16_t* src, int length, int* out_len) {
-		auto buff = qgr::Codec::encoding(qgr::Encoding::UTF8, src, length);
-		*out_len = buff.length();
-		return buff.collapse();
-	}
-
-	uint16_t* QgrEnvironment::decoding_utf8_to_uint16(const char* src, int length, int* out_len) {
-		auto buff = qgr::Codec::decoding_to_uint16(qgr::Encoding::UTF8, src, length);
-		*out_len = buff.length();
-		return buff.collapse();
-	}
-
-	bool QgrEnvironment::is_exited() {
-		return qgr::is_exited();
+	void QgrEnvironment::test() {
+		printf("%s\n", "QgrEnvironment::test ok");
 	}
 
 	class NodeApiIMPL: public NodeAPI {
@@ -109,6 +87,6 @@ namespace node {
 }
 
 NODE_C_CTOR(NodeApiIMPL_initialize) {
-	assert(!node::qgr_node_api);
+	assert(node::qgr_node_api == nullptr);
 	node::qgr_node_api = new node::NodeApiIMPL();
 }

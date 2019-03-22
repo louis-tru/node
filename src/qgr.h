@@ -31,6 +31,12 @@
 #ifndef __qgr__node__
 #define __qgr__node__
 
+#ifdef _WIN32
+# define NODE_EXPORT __declspec(dllexport)
+#else
+# define NODE_EXPORT __attribute__((visibility("default")))
+#endif
+
 namespace qgr {
 	namespace js {
 		class Worker;
@@ -39,31 +45,34 @@ namespace qgr {
 
 namespace node {
 
+	using qgr::js::Worker;
+
 	class Environment;
 
-	class QgrEnvironment {
+	class NODE_EXPORT QgrEnvironment {
 	 public:
 		QgrEnvironment(Environment* env);
 		~QgrEnvironment();
-		inline qgr::js::Worker* worker() { return m_worker; }
+		inline Worker* worker() { return m_worker; }
 		inline Environment* env() { return m_env; }
-		void run_loop();
-		char* encoding_to_utf8(const uint16_t* src, int length, int* out_len);
-		uint16_t* decoding_utf8_to_uint16(const char* src, int length, int* out_len);
-		bool is_exited();
+		static void run_loop();
+		static bool is_exited();
+		static char* encoding_to_utf8(const uint16_t* src, int length, int* out_len);
+		static uint16_t* decoding_utf8_to_uint16(const char* src, int length, int* out_len);
+		static void test();
 	 private:
-		qgr::js::Worker* m_worker;
+		Worker* m_worker;
 		Environment* m_env;
 	};
 
-	class NodeAPI {
+	class NODE_EXPORT NodeAPI {
 	 public:
 		virtual int Start(int argc, char *argv[]) = 0;
 		virtual void* binding_node_module(const char* name) = 0;
 	};
 
-	extern QgrEnvironment* qgr_env;
-	extern NodeAPI* qgr_node_api;
+	NODE_EXPORT extern QgrEnvironment* qgr_env;
+	NODE_EXPORT extern NodeAPI* qgr_node_api;
 }
 
 #endif
