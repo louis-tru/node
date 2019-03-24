@@ -43,22 +43,18 @@ namespace qgr {
 namespace node {
 
 	namespace crypto {
-		extern X509_STORE* NewRootCertStore();
+		X509_STORE* NewRootCertStore();
 	}
 
 	QgrEnvironment::QgrEnvironment(Environment* env)
 	{
-		assert(!env);
+		assert(!qgr_env);
 		qgr_env = this;
 		m_env = env;
 		qgr::set_ssl_root_x509_store_function(crypto::NewRootCertStore);
 		v8::HandleScope scope(env->isolate());
 		v8::Local<v8::Context> context = env->context();
 		m_worker = qgr::js::createWorkerWithNode(env->isolate(), &context);
-	}
-
-	void QgrEnvironment::test() {
-		printf("%s\n", "QgrEnvironment::test ok");
 	}
 
 	class NodeApiIMPL: public NodeAPI {
@@ -83,6 +79,8 @@ namespace node {
 			return *reinterpret_cast<void**>(&r);
 		}
 	};
+
+	NODE_EXPORT int force_link_node() { /* noop */ return 0; }
 
 }
 

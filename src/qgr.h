@@ -59,7 +59,6 @@ namespace node {
 		static bool is_exited();
 		static char* encoding_to_utf8(const uint16_t* src, int length, int* out_len);
 		static uint16_t* decoding_utf8_to_uint16(const char* src, int length, int* out_len);
-		static void test();
 	 private:
 		Worker* m_worker;
 		Environment* m_env;
