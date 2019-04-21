@@ -4558,6 +4558,7 @@ void ProcessArgv(int* argc,
   // Anything that's still in v8_argv is not a V8 or a node option.
   for (int i = 1; i < v8_argc; i++) {
     fprintf(stderr, "%s: bad option: %s\n", argv[0], v8_argv[i]);
+    if (strstr(v8_argv[i], "--inspect")) v8_argc--;
   }
   delete[] v8_argv;
   v8_argv = nullptr;
