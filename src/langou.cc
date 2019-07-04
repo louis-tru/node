@@ -28,50 +28,63 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-#ifndef __qgr__node__
-#define __qgr__node__
+#include "v8.h"
+#include "langou.h"
 
-#ifdef _WIN32
-# define NODE_EXPORT __declspec(dllexport)
-#else
-# define NODE_EXPORT __attribute__((visibility("default")))
-#endif
+typedef struct x509_store_st X509_STORE;
 
-namespace qgr {
+namespace langou {
+	void set_ssl_root_x509_store_function(X509_STORE* (*)());
 	namespace js {
-		class Worker;
+		Worker* createWorkerWithNode(void* isolate, void* context);
 	}
 }
 
 namespace node {
 
-	using qgr::js::Worker;
+	namespace crypto {
+		X509_STORE* NewRootCertStore();
+	}
 
-	class Environment;
+	LangouEnvironment::LangouEnvironment(Environment* env)
+	{
+		assert(!langou_env);
+		langou_env = this;
+		m_env = env;
+		langou::set_ssl_root_x509_store_function(crypto::NewRootCertStore);
+		v8::HandleScope scope(env->isolate());
+		v8::Local<v8::Context> context = env->context();
+		m_worker = langou::js::createWorkerWithNode(env->isolate(), &context);
+	}
 
-	class NODE_EXPORT QgrEnvironment {
+	class NodeApiIMPL: public NodeAPI {
 	 public:
-		QgrEnvironment(Environment* env);
-		~QgrEnvironment();
-		inline Worker* worker() { return m_worker; }
-		inline Environment* env() { return m_env; }
-		static void run_loop();
-		static bool is_exited();
-		static char* encoding_to_utf8(const uint16_t* src, int length, int* out_len);
-		static uint16_t* decoding_utf8_to_uint16(const char* src, int length, int* out_len);
-	 private:
-		Worker* m_worker;
-		Environment* m_env;
+
+		int Start(int argc, char *argv[]) {
+			return node::Start(argc, argv);
+		}
+
+		void* binding_node_module(const char* name) {
+			assert(langou_env);
+			auto env = langou_env->env();
+			auto isolate = env->isolate();
+			auto type = v8::NewStringType::kInternalized;
+			auto binding = v8::String::NewFromOneByte(
+				isolate, (const uint8_t*)"binding", type).ToLocalChecked();
+			auto func = v8::Local<v8::Function>::Cast(
+				env->process_object()->Get(env->context(), binding).ToLocalChecked());
+			v8::Local<v8::Value> argv =
+				v8::String::NewFromOneByte(isolate, (const uint8_t*)name, type).ToLocalChecked();
+			auto r = func->Call(env->context(), v8::Undefined(isolate), 1, &argv);
+			return *reinterpret_cast<void**>(&r);
+		}
 	};
 
-	class NODE_EXPORT NodeAPI {
-	 public:
-		virtual int Start(int argc, char *argv[]) = 0;
-		virtual void* binding_node_module(const char* name) = 0;
-	};
+	NODE_EXPORT int force_link_node() { /* noop */ return 0; }
 
-	NODE_EXPORT extern QgrEnvironment* qgr_env;
-	NODE_EXPORT extern NodeAPI* qgr_node_api;
 }
 
-#endif
+NODE_C_CTOR(NodeApiIMPL_initialize) {
+	assert(node::langou_node_api == nullptr);
+	node::langou_node_api = new node::NodeApiIMPL();
+}
