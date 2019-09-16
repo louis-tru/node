@@ -28,8 +28,8 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-#ifndef __langou__node__
-#define __langou__node__
+#ifndef __ngui__node__
+#define __ngui__node__
 
 #ifdef _WIN32
 # define NODE_EXPORT __declspec(dllexport)
@@ -37,7 +37,7 @@
 # define NODE_EXPORT __attribute__((visibility("default")))
 #endif
 
-namespace langou {
+namespace ngui {
 	namespace js {
 		class Worker;
 	}
@@ -45,14 +45,14 @@ namespace langou {
 
 namespace node {
 
-	using langou::js::Worker;
+	using ngui::js::Worker;
 
 	class Environment;
 
-	class NODE_EXPORT LangouEnvironment {
+	class NODE_EXPORT NguiEnvironment {
 	 public:
-		LangouEnvironment(Environment* env);
-		~LangouEnvironment();
+		NguiEnvironment(Environment* env);
+		~NguiEnvironment();
 		inline Worker* worker() { return m_worker; }
 		inline Environment* env() { return m_env; }
 		static void run_loop();
@@ -70,8 +70,8 @@ namespace node {
 		virtual void* binding_node_module(const char* name) = 0;
 	};
 
-	NODE_EXPORT extern LangouEnvironment* langou_env;
-	NODE_EXPORT extern NodeAPI* langou_node_api;
+	NODE_EXPORT extern NguiEnvironment* ngui_env;
+	NODE_EXPORT extern NodeAPI* ngui_node_api;
 }
 
 #endif

@@ -29,11 +29,11 @@
  * ***** END LICENSE BLOCK ***** */
 
 #include "v8.h"
-#include "langou.h"
+#include "ngui.h"
 
 typedef struct x509_store_st X509_STORE;
 
-namespace langou {
+namespace ngui {
 	void set_ssl_root_x509_store_function(X509_STORE* (*)());
 	namespace js {
 		Worker* createWorkerWithNode(void* isolate, void* context);
@@ -46,15 +46,15 @@ namespace node {
 		X509_STORE* NewRootCertStore();
 	}
 
-	LangouEnvironment::LangouEnvironment(Environment* env)
+	NguiEnvironment::NguiEnvironment(Environment* env)
 	{
-		assert(!langou_env);
-		langou_env = this;
+		assert(!ngui_env);
+		ngui_env = this;
 		m_env = env;
-		langou::set_ssl_root_x509_store_function(crypto::NewRootCertStore);
+		ngui::set_ssl_root_x509_store_function(crypto::NewRootCertStore);
 		v8::HandleScope scope(env->isolate());
 		v8::Local<v8::Context> context = env->context();
-		m_worker = langou::js::createWorkerWithNode(env->isolate(), &context);
+		m_worker = ngui::js::createWorkerWithNode(env->isolate(), &context);
 	}
 
 	class NodeApiIMPL: public NodeAPI {
@@ -65,8 +65,8 @@ namespace node {
 		}
 
 		void* binding_node_module(const char* name) {
-			assert(langou_env);
-			auto env = langou_env->env();
+			assert(ngui_env);
+			auto env = ngui_env->env();
 			auto isolate = env->isolate();
 			auto type = v8::NewStringType::kInternalized;
 			auto binding = v8::String::NewFromOneByte(
@@ -85,6 +85,6 @@ namespace node {
 }
 
 NODE_C_CTOR(NodeApiIMPL_initialize) {
-	assert(node::langou_node_api == nullptr);
-	node::langou_node_api = new node::NodeApiIMPL();
+	assert(node::ngui_node_api == nullptr);
+	node::ngui_node_api = new node::NodeApiIMPL();
 }

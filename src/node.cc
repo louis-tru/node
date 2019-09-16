@@ -123,7 +123,7 @@ typedef int mode_t;
 extern char **environ;
 #endif
 
-#include "langou.cc"
+#include "ngui.cc"
 
 namespace node {
 
@@ -4783,7 +4783,7 @@ inline int Start(Isolate* isolate, IsolateData* isolate_data,
     env.async_hooks()->force_checks();
   }
 
-  LangouEnvironment langou(&env);
+  NguiEnvironment ngui(&env);
 
   {
     Environment::AsyncCallbackScope callback_scope(&env);
@@ -4799,10 +4799,10 @@ inline int Start(Isolate* isolate, IsolateData* isolate_data,
     bool more;
     PERFORMANCE_MARK(&env, LOOP_START);
     do {
-      langou_env->run_loop();
+      ngui_env->run_loop();
       /* IOS forces the process to terminate, but it does not quit immediately.
        This may cause a process to run in the background for a long time, so force break here */
-      if (langou_env->is_exited()) break;
+      if (ngui_env->is_exited()) break;
 
       v8_platform.DrainVMTasks();
 
@@ -4872,7 +4872,7 @@ inline int Start(uv_loop_t* event_loop,
     exit_code = Start(isolate, &isolate_data, argc, argv, exec_argc, exec_argv);
   }
 
-  if (!langou_env->is_exited())
+  if (!ngui_env->is_exited())
   {
     Mutex::ScopedLock scoped_lock(node_isolate_mutex);
     CHECK_EQ(node_isolate, isolate);
