@@ -4783,7 +4783,7 @@ inline int Start(Isolate* isolate, IsolateData* isolate_data,
     env.async_hooks()->force_checks();
   }
 
-  NguiEnvironment ngui(&env);
+  NguiApi api(&env);
 
   {
     Environment::AsyncCallbackScope callback_scope(&env);
@@ -4799,10 +4799,10 @@ inline int Start(Isolate* isolate, IsolateData* isolate_data,
     bool more;
     PERFORMANCE_MARK(&env, LOOP_START);
     do {
-      ngui_env->run_loop();
+      NguiApi::run_main_loop();
       /* IOS forces the process to terminate, but it does not quit immediately.
        This may cause a process to run in the background for a long time, so force break here */
-      if (ngui_env->is_exited()) break;
+      if (NguiApi::is_exited()) break;
 
       v8_platform.DrainVMTasks();
 
@@ -4872,7 +4872,7 @@ inline int Start(uv_loop_t* event_loop,
     exit_code = Start(isolate, &isolate_data, argc, argv, exec_argc, exec_argv);
   }
 
-  if (!ngui_env->is_exited())
+  if (!NguiApi::is_exited())
   {
     Mutex::ScopedLock scoped_lock(node_isolate_mutex);
     CHECK_EQ(node_isolate, isolate);

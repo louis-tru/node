@@ -50,16 +50,13 @@ namespace node {
 	class Environment;
 	class NodeCallbackScope;
 
-	class NODE_EXPORT NguiEnvironment {
+	class NODE_EXPORT NguiApi {
 	 public:
-		NguiEnvironment(Environment* env);
-		~NguiEnvironment();
+		NguiApi(Environment* env);
+		~NguiApi();
 		inline Worker* worker() { return m_worker; }
 		inline Environment* env() { return m_env; }
-		NodeCallbackScope* new_callback_scope();
-		void del_callback_scope(NodeCallbackScope* scope);
-		void* binding_node_module(const char* name);
-		static void run_loop();
+		static void run_main_loop();
 		static bool is_exited();
 		static char* encoding_to_utf8(const uint16_t* src, int length, int* out_len);
 		static uint16_t* decoding_utf8_to_uint16(const char* src, int length, int* out_len);
@@ -70,11 +67,14 @@ namespace node {
 
 	class NODE_EXPORT NodeAPI {
 	 public:
-		virtual int Start(int argc, char *argv[]) = 0;
+		virtual int start(int argc, char *argv[]) = 0;
+		virtual NodeCallbackScope* callback_scope(Environment* env) = 0;
+		virtual void delete_callback_scope(NodeCallbackScope* scope) = 0;
+		virtual void* binding_node_module(const char* name) = 0;
 	};
 
-	NODE_EXPORT extern NguiEnvironment* ngui_env;
-	NODE_EXPORT extern NodeAPI* ngui_node_api;
+	NODE_EXPORT extern NguiApi* ngui_api;
+	NODE_EXPORT extern NodeAPI* node_api;
 }
 
 #endif
