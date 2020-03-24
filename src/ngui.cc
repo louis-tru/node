@@ -36,7 +36,7 @@ typedef struct x509_store_st X509_STORE;
 namespace ngui {
 	void set_ssl_root_x509_store_function(X509_STORE* (*)());
 	namespace js {
-		Worker* createWorkerWithNode(void* isolate, void* context);
+		Worker* NewWorkerWithNode(void* isolate, void* context);
 	}
 }
 
@@ -46,6 +46,26 @@ namespace node {
 		X509_STORE* NewRootCertStore();
 	}
 
+	class NODE_EXPORT NodeCallbackScope {
+	 public:
+		NodeCallbackScope(Environment* env)
+			: private_(new InternalCallbackScope(env, v8::Local<v8::Object>(), {0,0},
+																					 InternalCallbackScope::kAllowEmptyResource)),
+				try_catch_(env->isolate()) {
+		try_catch_.SetVerbose(true);
+	}
+
+	~NodeCallbackScope() {
+		if (try_catch_.HasCaught())
+			private_->MarkAsFailed();
+		delete private_;
+	}
+
+	private:
+		InternalCallbackScope* private_;
+		v8::TryCatch try_catch_;
+	};
+
 	NguiEnvironment::NguiEnvironment(Environment* env)
 	{
 		assert(!ngui_env);
@@ -54,34 +74,39 @@ namespace node {
 		ngui::set_ssl_root_x509_store_function(crypto::NewRootCertStore);
 		v8::HandleScope scope(env->isolate());
 		v8::Local<v8::Context> context = env->context();
-		m_worker = ngui::js::createWorkerWithNode(env->isolate(), &context);
+		m_worker = ngui::js::NewWorkerWithNode(env->isolate(), &context);
+	}
+	
+	NodeCallbackScope* NguiEnvironment::new_callback_scope() {
+		return new NodeCallbackScope(m_env);
+	}
+
+	void NguiEnvironment::del_callback_scope(NodeCallbackScope* scope) {
+		delete scope;
+	}
+
+	void* NguiEnvironment::binding_node_module(const char* name) {
+		auto env = m_env;
+		auto isolate = env->isolate();
+		auto type = v8::NewStringType::kInternalized;
+		auto binding = v8::String::NewFromOneByte(
+			isolate, (const uint8_t*)"binding", type).ToLocalChecked();
+		auto func = v8::Local<v8::Function>::Cast(
+			env->process_object()->Get(env->context(), binding).ToLocalChecked());
+		v8::Local<v8::Value> argv =
+			v8::String::NewFromOneByte(isolate, (const uint8_t*)name, type).ToLocalChecked();
+		auto r = func->Call(env->context(), v8::Undefined(isolate), 1, &argv);
+		return *reinterpret_cast<void**>(&r);
 	}
 
 	class NodeApiIMPL: public NodeAPI {
 	 public:
-
 		int Start(int argc, char *argv[]) {
 			return node::Start(argc, argv);
-		}
-
-		void* binding_node_module(const char* name) {
-			assert(ngui_env);
-			auto env = ngui_env->env();
-			auto isolate = env->isolate();
-			auto type = v8::NewStringType::kInternalized;
-			auto binding = v8::String::NewFromOneByte(
-				isolate, (const uint8_t*)"binding", type).ToLocalChecked();
-			auto func = v8::Local<v8::Function>::Cast(
-				env->process_object()->Get(env->context(), binding).ToLocalChecked());
-			v8::Local<v8::Value> argv =
-				v8::String::NewFromOneByte(isolate, (const uint8_t*)name, type).ToLocalChecked();
-			auto r = func->Call(env->context(), v8::Undefined(isolate), 1, &argv);
-			return *reinterpret_cast<void**>(&r);
 		}
 	};
 
 	NODE_EXPORT int force_link_node() { /* noop */ return 0; }
-
 }
 
 NODE_C_CTOR(NodeApiIMPL_initialize) {

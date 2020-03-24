@@ -48,6 +48,7 @@ namespace node {
 	using ngui::js::Worker;
 
 	class Environment;
+	class NodeCallbackScope;
 
 	class NODE_EXPORT NguiEnvironment {
 	 public:
@@ -55,6 +56,9 @@ namespace node {
 		~NguiEnvironment();
 		inline Worker* worker() { return m_worker; }
 		inline Environment* env() { return m_env; }
+		NodeCallbackScope* new_callback_scope();
+		void del_callback_scope(NodeCallbackScope* scope);
+		void* binding_node_module(const char* name);
 		static void run_loop();
 		static bool is_exited();
 		static char* encoding_to_utf8(const uint16_t* src, int length, int* out_len);
@@ -67,7 +71,6 @@ namespace node {
 	class NODE_EXPORT NodeAPI {
 	 public:
 		virtual int Start(int argc, char *argv[]) = 0;
-		virtual void* binding_node_module(const char* name) = 0;
 	};
 
 	NODE_EXPORT extern NguiEnvironment* ngui_env;
