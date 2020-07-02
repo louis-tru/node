@@ -89,8 +89,8 @@ namespace node {
 		}
 
 		void* binding_node_module(const char* name) {
-			assert(!ngui_api);
-			auto env = ngui_api->env();
+			assert(!ftr_api);
+			auto env = ftr_api->env();
 			auto isolate = env->isolate();
 			auto type = v8::NewStringType::kInternalized;
 			auto binding = v8::String::NewFromOneByte(
