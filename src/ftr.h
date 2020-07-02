@@ -28,8 +28,8 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-#ifndef __ngui__node__
-#define __ngui__node__
+#ifndef __ftr__node__
+#define __ftr__node__
 
 #ifdef _WIN32
 # define NODE_EXPORT __declspec(dllexport)
@@ -37,7 +37,7 @@
 # define NODE_EXPORT __attribute__((visibility("default")))
 #endif
 
-namespace ngui {
+namespace ftr {
 	namespace js {
 		class Worker;
 	}
@@ -45,15 +45,15 @@ namespace ngui {
 
 namespace node {
 
-	using ngui::js::Worker;
+	using ftr::js::Worker;
 
 	class Environment;
 	class NodeCallbackScope;
 
-	class NODE_EXPORT NguiApi {
+	class NODE_EXPORT FtrApi {
 	 public:
-		NguiApi(Environment* env);
-		~NguiApi();
+		FtrApi(Environment* env);
+		~FtrApi();
 		inline Worker* worker() { return m_worker; }
 		inline Environment* env() { return m_env; }
 		static void run_main_loop();
@@ -73,7 +73,7 @@ namespace node {
 		virtual void* binding_node_module(const char* name) = 0;
 	};
 
-	NODE_EXPORT extern NguiApi* ngui_api;
+	NODE_EXPORT extern FtrApi* ftr_api;
 	NODE_EXPORT extern NodeAPI* node_api;
 }
 

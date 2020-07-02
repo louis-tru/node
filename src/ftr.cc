@@ -29,11 +29,11 @@
  * ***** END LICENSE BLOCK ***** */
 
 #include "v8.h"
-#include "ngui.h"
+#include "ftr.h"
 
 typedef struct x509_store_st X509_STORE;
 
-namespace ngui {
+namespace ftr {
 	void set_ssl_root_x509_store_function(X509_STORE* (*)());
 	namespace js {
 		Worker* new_worker_with_node(v8::Isolate* isolate, v8::Local<v8::Context> context);
@@ -66,12 +66,12 @@ namespace node {
 		v8::TryCatch try_catch_;
 	};
 
-	NguiApi::NguiApi(Environment* env): m_worker(nullptr), m_env(env)
+	FtrApi::FtrApi(Environment* env): m_worker(nullptr), m_env(env)
 	{
-		assert(!ngui_api);
-		ngui_api = this;
-		ngui::set_ssl_root_x509_store_function(crypto::NewRootCertStore);
-		m_worker = ngui::js::new_worker_with_node(env->isolate(), env->context());
+		assert(!ftr_api);
+		ftr_api = this;
+		ftr::set_ssl_root_x509_store_function(crypto::NewRootCertStore);
+		m_worker = ftr::js::new_worker_with_node(env->isolate(), env->context());
 	}
 
 	class NodeApiIMPL: public NodeAPI {
