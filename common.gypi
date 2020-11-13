@@ -318,9 +318,9 @@
             'ldflags': [ '-m32' ],
           }],
           [ 'target_arch=="ppc64" and OS!="aix"', {
-            'cflags': [ '-m64', '-mminimal-toc' ],
-            'ldflags': [ '-m64' ],
-           }],
+	    'cflags': [ '-m64', '-mminimal-toc' ],
+	    'ldflags': [ '-m64' ],
+	   }],
           [ 'target_arch=="s390"', {
             'cflags': [ '-m31', '-march=z196' ],
             'ldflags': [ '-m31', '-march=z196' ],
