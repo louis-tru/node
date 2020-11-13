@@ -209,9 +209,8 @@ void MarkGarbageCollectionStart(Isolate* isolate,
 
 void MarkGarbageCollectionEnd(Isolate* isolate,
                               v8::GCType type,
-                              v8::GCCallbackFlags flags,
-                              void* data) {
-  Environment* env = static_cast<Environment*>(data);
+                              v8::GCCallbackFlags flags) {
+  Environment* env = Environment::GetCurrent(isolate);
   uv_async_t* async = new uv_async_t();  // coverity[leaked_storage]
   if (uv_async_init(env->event_loop(), async, PerformanceGCCallback))
     return delete async;
@@ -224,8 +223,7 @@ void MarkGarbageCollectionEnd(Isolate* isolate,
 
 inline void SetupGarbageCollectionTracking(Environment* env) {
   env->isolate()->AddGCPrologueCallback(MarkGarbageCollectionStart);
-  env->isolate()->AddGCEpilogueCallback(MarkGarbageCollectionEnd,
-                                        static_cast<void*>(env));
+  env->isolate()->AddGCEpilogueCallback(MarkGarbageCollectionEnd);
 }
 
 inline Local<Value> GetName(Local<Function> fn) {
