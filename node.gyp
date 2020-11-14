@@ -716,7 +716,7 @@
         }],
         [ 'node_use_v8_platform=="true"', {
           'dependencies': [
-            'deps/v8/src/v8.gyp:v8_libplatform',
+            #'deps/v8/src/v8.gyp:v8_libplatform',
           ],
         }],
         [ 'node_use_dtrace=="true" and OS!="mac" and OS!="linux"', {
