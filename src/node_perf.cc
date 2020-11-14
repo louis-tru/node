@@ -210,7 +210,7 @@ void MarkGarbageCollectionStart(Isolate* isolate,
 void MarkGarbageCollectionEnd(Isolate* isolate,
                               v8::GCType type,
                               v8::GCCallbackFlags flags) {
-  Environment* env = Environment::GetCurrent(isolate);
+  Environment* env = Environment::GetCurrent(isolate->GetEnteredContext());
   uv_async_t* async = new uv_async_t();  // coverity[leaked_storage]
   if (uv_async_init(env->event_loop(), async, PerformanceGCCallback))
     return delete async;
