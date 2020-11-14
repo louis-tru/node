@@ -118,3 +118,5 @@ deps/uv/.github/
 deps/uv/docs/code/
 deps/uv/docs/src/guide/
 !deps/v8/src/base/debug
+
+**.DS_Store
