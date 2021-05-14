@@ -11,7 +11,7 @@
 #include "zlib.h"
 
 #include <sstream>
-#include "ftr.h"
+#include "flare.h"
 
 #include <string.h>
 #include <vector>

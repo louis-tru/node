@@ -29,11 +29,11 @@
  * ***** END LICENSE BLOCK ***** */
 
 #include "v8.h"
-#include "ftr.h"
+#include "flare.h"
 
 typedef struct x509_store_st X509_STORE;
 
-namespace ftr {
+namespace flare {
 	void set_ssl_root_x509_store_function(X509_STORE* (*)());
 	namespace js {
 		Worker* new_worker_with_node(v8::Isolate* isolate, v8::Local<v8::Context> context);
@@ -66,12 +66,12 @@ namespace node {
 		v8::TryCatch try_catch_;
 	};
 
-	FtrApi::FtrApi(Environment* env): m_worker(nullptr), m_env(env)
+	FlareApi::FlareApi(Environment* env): m_worker(nullptr), m_env(env)
 	{
-		assert(!ftr_api);
-		ftr_api = this;
-		ftr::set_ssl_root_x509_store_function(crypto::NewRootCertStore);
-		m_worker = ftr::js::new_worker_with_node(env->isolate(), env->context());
+		assert(!flare_api);
+		flare_api = this;
+		flare::set_ssl_root_x509_store_function(crypto::NewRootCertStore);
+		m_worker = flare::js::new_worker_with_node(env->isolate(), env->context());
 	}
 
 	class NodeApiIMPL: public NodeAPI {
@@ -89,8 +89,8 @@ namespace node {
 		}
 
 		void* binding_node_module(const char* name) {
-			assert(!ftr_api);
-			auto env = ftr_api->env();
+			assert(!flare_api);
+			auto env = flare_api->env();
 			auto isolate = env->isolate();
 			auto type = v8::NewStringType::kInternalized;
 			auto binding = v8::String::NewFromOneByte(

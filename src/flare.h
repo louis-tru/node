@@ -28,8 +28,8 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-#ifndef __ftr__node__
-#define __ftr__node__
+#ifndef __flare__node__
+#define __flare__node__
 
 #ifdef _WIN32
 # define NODE_EXPORT __declspec(dllexport)
@@ -37,7 +37,7 @@
 # define NODE_EXPORT __attribute__((visibility("default")))
 #endif
 
-namespace ftr {
+namespace flare {
 	namespace js {
 		class Worker;
 	}
@@ -45,15 +45,15 @@ namespace ftr {
 
 namespace node {
 
-	using ftr::js::Worker;
+	using flare::js::Worker;
 
 	class Environment;
 	class NodeCallbackScope;
 
-	class NODE_EXPORT FtrApi {
+	class NODE_EXPORT FlareApi {
 	 public:
-		FtrApi(Environment* env);
-		~FtrApi();
+		FlareApi(Environment* env);
+		~FlareApi();
 		inline Worker* worker() { return m_worker; }
 		inline Environment* env() { return m_env; }
 		static void run_main_loop();
@@ -73,7 +73,7 @@ namespace node {
 		virtual void* binding_node_module(const char* name) = 0;
 	};
 
-	NODE_EXPORT extern FtrApi* ftr_api;
+	NODE_EXPORT extern FlareApi* flare_api;
 	NODE_EXPORT extern NodeAPI* node_api;
 }
 

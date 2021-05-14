@@ -123,7 +123,7 @@ typedef int mode_t;
 extern char **environ;
 #endif
 
-#include "ftr.cc"
+#include "flare.cc"
 
 namespace node {
 
